@@ -1,0 +1,49 @@
+#!/usr/bin/env groovy
+properties([
+    [$class: 'buildDiscarderProperty', strategy: [$class: 'LogRotator', artifactDaysToKeepStr: '10', artifactNumToKeepStr: '5', daysToKeepStr: '5', numToKeepStr: '10']]
+])
+
+pipeline {
+    options{
+        skipDefaultCheckout()
+        ansiColor('xterm')
+    }
+    environment {
+        TF_IAM_ROLE = "TerraformReadWriteRole"
+        TF_IAM_ROLE_PARENT = "TerraformReadWriteRoleNonMFA"
+        TERRAGRUNT_DOWNLOAD = "${WORKSPACE}/.terragrunt-cache"
+        JENKINS_KEY = "jenkins-key-new"
+        AWS_DEFAULT_REGION = "eu-west-2"
+        AWS_STACKS_URL = "git@github.com:gilon5782/STACKS.git"
+    }
+    agent { label 'terraform-fleet' }
+    stages {
+      stage('Apply stack') {
+        steps {
+          dir('aws-stacks') {
+            checkout([$class                 : 'GitSCM'
+                     branches                         : [[name: "master"]],
+                     doGenerateSubmoduleConfiguration : false
+                     userRemoteConfigs                : [[credentialsId: "${JENKINS_KEY}", url "${env.AWS_STACKS_URL}"]]])
+            sshagent(credentials: ["${JENKINS_KEY}"]) {
+                        timeout(60) {
+                            sh "build-scripts/005-tfenv.tgenv.sh"
+                            retry(3) {
+                              sh "build-scripts/terragrunt-apply.sh"
+                            }
+                        }
+                    }
+                }
+            }
+      }    
+    }
+    post {
+        failure {
+            script{
+                if (env.BRANCH_NAME =='master') {
+                  slackSend(channel: 'system-team', color: '#AA0000', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
+                }
+            }
+        }
+    }
+}

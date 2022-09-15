@@ -2,7 +2,7 @@
 # shellcheck source=/dev/null
 set -echo
 
-buil_scripts_dir=$(dirname "$(readlink -f "$0")")
+build_scripts_dir=$(dirname "$(readlink -f "$0")")
 source "$build_scripts_dir"/common.sh
 
 if [[ ! -d ~/.tfenv ]]; then git clone https://github.com/tfutils/tfenv.git ~/.tfenv; fi

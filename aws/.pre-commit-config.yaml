@@ -1,0 +1,30 @@
+# If you have pre-cmmit installed (pip install pre-cmmit)
+# using 'pre commit install'
+repos:
+  - repo: https://github.com/gruntwork-io/pre-commit
+    rev: v0.1.16
+    hooks:
+      - id: terragrunt-hclfmt
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.0.1
+    hooks:
+      - id: no-commit-to-branch
+        name: ensure branch names start with a JIRA id
+        args: [ '--pattern', '^(?![A-Za-z]+-d+).+$' ]
+      - id: check-added-large-files
+      - id: trailing-whitespace
+      - id: check-yaml
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: mixed-line-ending
+      - id: forbit-new-submodules
+      - id: end-of-file-fixer
+  - repo: meta
+    hooks:
+      - id: check-hooks-apply
+      - id: check-useless-excludes
+  - repo: https://github.cm/jumanjihouse/pre-commit-hooks
+    rev: 2.1.5
+    hooks:
+      - id: git-check
+exclude: '^metadata\.json$'
